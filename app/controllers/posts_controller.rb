@@ -1,4 +1,5 @@
 class PostsController < ApplicationController
+  before_action :authenticate_user!, only: [:create, :destroy, :edit, :update, :new]
   before_action :set_post, only: [:show, :edit, :update, :destroy]
 
   # GET /posts
@@ -15,6 +16,7 @@ class PostsController < ApplicationController
   # GET /posts/new
   def new
     @post = Post.new
+    
   end
 
   # GET /posts/1/edit
@@ -25,11 +27,13 @@ class PostsController < ApplicationController
   # POST /posts.json
   def create
     @post = Post.new(post_params)
+    @post.user_id = current_user.id
 
     respond_to do |format|
       if @post.save
         format.html { redirect_to @post, notice: 'Post was successfully created.' }
         format.json { render :show, status: :created, location: @post }
+        
       else
         format.html { render :new }
         format.json { render json: @post.errors, status: :unprocessable_entity }
@@ -54,10 +58,17 @@ class PostsController < ApplicationController
   # DELETE /posts/1
   # DELETE /posts/1.json
   def destroy
-    @post.destroy
-    respond_to do |format|
-      format.html { redirect_to posts_url, notice: 'Post was successfully destroyed.' }
-      format.json { head :no_content }
+    if @post.user_id == current_user.id
+      @post.destroy 
+      respond_to do |format|
+        format.html { redirect_to posts_url, notice: 'Post was successfully destroyed.' }
+        format.json { head :no_content }
+      end 
+    else 
+      respond_to do |format|
+        format.html { redirect_to posts_url, alert: 'You can not delete others posts' }
+        format.json { head :no_content }
+      end
     end
   end
 
